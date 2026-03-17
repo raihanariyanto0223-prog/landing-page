@@ -107,12 +107,7 @@ function ArtistCard({ artist, isActive }: { artist: Artist; isActive: boolean })
           />
           {/* Gradient */}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(5,5,8,1) 0%, rgba(5,5,8,0.3) 50%, rgba(5,5,8,0.05) 100%)" }} />
-          {/* Headliner */}
-          {artist.headliner && (
-            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full" style={{ background: cfg.color, boxShadow: `0 0 14px ${cfg.color}80` }}>
-              <span style={{ ...SG, fontSize: "0.55rem", color: "#050508", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase" }}>HEADLINER</span>
-            </div>
-          )}
+
           {/* Day pill */}
           <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "rgba(5,5,8,0.8)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.color }} />
