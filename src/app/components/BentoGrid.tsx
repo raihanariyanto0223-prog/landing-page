@@ -1,5 +1,64 @@
+import React, { useRef, useState } from "react";
 import { MapPin, Clock, Ticket, Building2, ArrowUpRight } from "lucide-react";
 import { motion } from "motion/react";
+
+function SpotlightCard({ 
+  children, 
+  spotlightColor = "rgba(255, 255, 255, 0.25)",
+  className = "",
+  style = {}
+}: { 
+  children: React.ReactNode; 
+  spotlightColor?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const divRef = useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [opacity, setOpacity] = useState(0);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!divRef.current || isFocused) return;
+    const div = divRef.current;
+    const rect = div.getBoundingClientRect();
+    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
+  const handleFocus = () => { setIsFocused(true); setOpacity(1); };
+  const handleBlur = () => { setIsFocused(false); setOpacity(0); };
+  const handleMouseEnter = () => { setOpacity(1); };
+  const handleMouseLeave = () => { setOpacity(0); };
+
+  return (
+    <div
+      ref={divRef}
+      onMouseMove={handleMouseMove}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`relative overflow-hidden p-6 rounded-2xl flex flex-col justify-center ${className}`}
+      style={{
+        background: "rgba(20,22,28,0.4)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        ...style
+      }}
+    >
+      <div
+        className="pointer-events-none absolute -inset-px opacity-0 transition duration-300"
+        style={{
+          opacity,
+          background: `radial-gradient(400px circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 40%)`,
+        }}
+      />
+      <div className="relative z-10 w-full flex flex-col justify-center flex-1">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 const SONGKRAN_PILLARS = [
   { label: "Thai New Year", highlight: true },
@@ -15,8 +74,15 @@ export function BentoGrid() {
   return (
     <section
       id="details"
-      className="w-full min-h-screen flex items-center justify-center px-6 py-20"
-      style={{ backgroundColor: "#111214" }}
+      className="w-full min-h-screen flex items-center justify-center px-6 py-20 relative"
+      style={{ 
+        backgroundColor: "#111214",
+        backgroundImage: `
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+        `,
+        backgroundSize: "100px 100px"
+      }}
     >
       <div className="w-full max-w-6xl">
 
@@ -82,14 +148,12 @@ export function BentoGrid() {
         <div className="flex flex-col lg:flex-row gap-0">
 
           {/* ── HERO: Date Block (dominant left column) ── */}
-          <div
-            className="relative lg:w-[55%] rounded-2xl p-8 pb-10 overflow-hidden flex flex-col justify-between"
+          <SpotlightCard
+            spotlightColor="rgba(0, 207, 255, 0.2)"
+            className="lg:w-[55%] pb-10 min-h-[380px]"
             style={{
-              background:
-                "linear-gradient(135deg, rgba(0,207,255,0.07) 0%, rgba(20,22,28,0.6) 60%, rgba(40,20,10,0.4) 100%)",
-              backdropFilter: "blur(12px)",
-              border: "1px solid rgba(0,207,255,0.12)",
-              minHeight: "380px",
+              background: "linear-gradient(135deg, rgba(0,207,255,0.07) 0%, rgba(20,22,28,0.6) 60%, rgba(40,20,10,0.4) 100%)",
+              border: "1px solid rgba(0,207,255,0.12)"
             }}
           >
             {/* Ambient glow */}
@@ -171,13 +235,13 @@ export function BentoGrid() {
                 11 days of celebration
               </span>
             </div>
-          </div>
+          </SpotlightCard>
 
-          {/* ── RIGHT COLUMN: Borderless Info Stack ── */}
-          <div className="lg:w-[45%] lg:pl-12 flex flex-col justify-between gap-0 pt-2">
+          {/* ── RIGHT COLUMN: Glassmorphism Info Stack ── */}
+          <div className="lg:w-[45%] lg:pl-12 flex flex-col justify-between gap-4 pt-2">
 
             {/* VENUE */}
-            <div className="py-5">
+            <SpotlightCard spotlightColor="rgba(0, 207, 255, 0.15)">
               <div className="flex items-center gap-2 mb-2">
                 <MapPin size={13} style={{ color: "#00CFFF" }} />
                 <span
@@ -220,13 +284,10 @@ export function BentoGrid() {
                   className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
                 />
               </button>
-            </div>
-
-            {/* Divider */}
-            <div style={{ height: "1px", background: "rgba(255,255,255,0.06)" }} />
+            </SpotlightCard>
 
             {/* DAILY HOURS */}
-            <div className="py-5">
+            <SpotlightCard spotlightColor="rgba(244, 160, 51, 0.1)">
               <div className="flex items-center gap-2 mb-3">
                 <Clock size={13} style={{ color: "#00CFFF" }} />
                 <span
@@ -264,16 +325,12 @@ export function BentoGrid() {
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.3)", marginTop: "0.4rem" }}>
                 12 hours of festivities
               </p>
-            </div>
-
-            {/* Divider */}
-            <div style={{ height: "1px", background: "rgba(255,255,255,0.06)" }} />
+            </SpotlightCard>
 
             {/* ADMISSION + ORGANISER row */}
-            <div className="py-5 flex gap-8">
-
+            <div className="flex flex-row gap-4">
               {/* Admission */}
-              <div className="flex-1">
+              <SpotlightCard spotlightColor="rgba(74, 222, 128, 0.15)" className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <Ticket size={13} style={{ color: "#4ade80" }} />
                   <span
@@ -304,13 +361,10 @@ export function BentoGrid() {
                     Open to everyone
                   </span>
                 </div>
-              </div>
-
-              {/* Vertical micro-divider */}
-              <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
+              </SpotlightCard>
 
               {/* Organiser */}
-              <div className="flex-1">
+              <SpotlightCard spotlightColor="rgba(156, 163, 175, 0.15)" className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <Building2 size={13} style={{ color: "rgba(255,255,255,0.4)" }} />
                   <span
@@ -334,7 +388,7 @@ export function BentoGrid() {
                 <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", lineHeight: 1.4 }}>
                   Bringing cultures together,<br />one festival at a time.
                 </p>
-              </div>
+              </SpotlightCard>
             </div>
 
           </div>

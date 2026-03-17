@@ -90,7 +90,7 @@ export function About() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="flex items-center gap-3 mb-16 md:mb-24"
+          className="flex items-center gap-3 mb-16 md:mb-18"
         >
           <div className="w-8 h-px bg-[#2FA7D8]" />
           <span style={{ ...SG, fontSize: "0.7rem", letterSpacing: "0.25em", color: "#2FA7D8", textTransform: "uppercase" }}>

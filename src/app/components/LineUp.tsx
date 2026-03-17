@@ -1,0 +1,319 @@
+import { useRef, useState, useEffect, useCallback } from "react";
+import { motion, useScroll, useTransform } from "motion/react";
+import { Mic2, Disc3, Music4, ChevronLeft, ChevronRight } from "lucide-react";
+
+const SYNE: React.CSSProperties = { fontFamily: "'Syne', sans-serif" };
+const SG: React.CSSProperties   = { fontFamily: "'Space Grotesk', sans-serif" };
+
+type ArtistType = "DJ" | "LIVE" | "SPECIAL";
+
+interface Artist {
+  id: number;
+  name: string;
+  origin: string;
+  type: ArtistType;
+  day: string;
+  image: string;
+  headliner?: boolean;
+  /** Vertical stagger for broken-grid depth */
+  offsetY: number;
+  /** Slight clockwise/counter-clockwise tilt */
+  rotate: number;
+}
+
+const TYPE_CONFIG: Record<ArtistType, { label: string; color: string; Icon: React.ElementType }> = {
+  DJ:      { label: "DJ SET",        color: "#00d4ff", Icon: Disc3  },
+  LIVE:    { label: "LIVE",          color: "#2FA7D8", Icon: Mic2   },
+  SPECIAL: { label: "SPECIAL GUEST", color: "#ffd740", Icon: Music4 },
+};
+
+const artists: Artist[] = [
+  { id: 1, name: "DJ Nakorn",  origin: "Bangkok, TH",      type: "DJ",      day: "Apr 9",  image: "/lineup_1.png", headliner: true,  offsetY: 40,  rotate: -2   },
+  { id: 2, name: "Aria Siam",  origin: "Chiang Mai, TH",   type: "LIVE",    day: "Apr 11", image: "/lineup_2.png", headliner: true,  offsetY: 0,   rotate:  1.5 },
+  { id: 3, name: "Ray Kasem",  origin: "Kuala Lumpur, MY", type: "LIVE",    day: "Apr 13", image: "/lineup_3.png",                   offsetY: 60,  rotate: -1.5 },
+  { id: 4, name: "DJ Supanat", origin: "Phuket, TH",       type: "DJ",      day: "Apr 15", image: "/lineup_4.png",                   offsetY: 20,  rotate:  2   },
+  { id: 5, name: "K-Force",    origin: "Seoul, KR",        type: "SPECIAL", day: "Apr 19", image: "/lineup_5.png", headliner: true,  offsetY: 35,  rotate: -1.2 },
+];
+
+/* ─── Bouncing Spotlight Orb ───────────────────────────── */
+interface OrbProps { color: string; size: number; duration: number; x1: string; y1: string; x2: string; y2: string; blur: number; }
+function SpotlightOrb({ color, size, duration, x1, y1, x2, y2, blur }: OrbProps) {
+  return (
+    <motion.div
+      className="absolute pointer-events-none"
+      style={{ width: size, height: size, borderRadius: "50%", background: `radial-gradient(circle at 40% 40%, ${color} 0%, transparent 70%)`, filter: `blur(${blur}px)`, left: 0, top: 0 }}
+      animate={{ x: [x1, x2, x1], y: [y1, y2, y1] }}
+      transition={{ duration, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
+    />
+  );
+}
+
+/* ─── Single Artist Card ───────────────────────────────── */
+function ArtistCard({ artist, isActive }: { artist: Artist; isActive: boolean }) {
+  const [hovered, setHovered] = useState(false);
+  const cfg = TYPE_CONFIG[artist.type];
+  const Icon = cfg.Icon;
+
+  return (
+    <div
+      data-card
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        // Responsive card width via CSS clamp
+        width: "clamp(220px, 58vw, 320px)",
+        flexShrink: 0,
+        // Broken-grid: small tilt + vertical stagger (scaled down for responsiveness)
+        transform: `translateY(${artist.offsetY * 0.5}px) rotate(${artist.rotate}deg)`,
+        transition: "transform 0.4s ease, z-index 0s",
+        zIndex: hovered || isActive ? 20 : 5,
+        cursor: "pointer",
+        // Negative margin for overlap
+        marginRight: "clamp(-24px, -2.5vw, -12px)",
+        scrollSnapAlign: "start",
+      }}
+    >
+      <motion.div
+        animate={{
+          scale: isActive ? 1.04 : hovered ? 1.03 : 1,
+          boxShadow: isActive
+            ? `0 0 60px ${cfg.color}50, 0 24px 60px rgba(0,0,0,0.7)`
+            : hovered
+            ? `0 0 40px ${cfg.color}30, 0 16px 40px rgba(0,0,0,0.6)`
+            : "0 6px 32px rgba(0,0,0,0.5)",
+        }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className="relative overflow-hidden"
+        style={{
+          borderRadius: 18,
+          border: isActive ? `1.5px solid ${cfg.color}66` : "1.5px solid rgba(255,255,255,0.07)",
+          background: "#060610",
+          transition: "border-color 0.35s",
+        }}
+      >
+        {/* Portrait Image */}
+        <div className="relative overflow-hidden" style={{ height: "clamp(280px, 45vh, 460px)" }}>
+          <motion.img
+            src={artist.image}
+            alt={artist.name}
+            draggable={false}
+            className="w-full h-full object-cover object-top"
+            animate={{ scale: hovered || isActive ? 1.06 : 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+          {/* Gradient */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(5,5,8,1) 0%, rgba(5,5,8,0.3) 50%, rgba(5,5,8,0.05) 100%)" }} />
+          {/* Headliner */}
+          {artist.headliner && (
+            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full" style={{ background: cfg.color, boxShadow: `0 0 14px ${cfg.color}80` }}>
+              <span style={{ ...SG, fontSize: "0.55rem", color: "#050508", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase" }}>HEADLINER</span>
+            </div>
+          )}
+          {/* Day pill */}
+          <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "rgba(5,5,8,0.72)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.color }} />
+            <span style={{ ...SG, fontSize: "0.62rem", color: "rgba(237,232,220,0.75)", fontWeight: 600, letterSpacing: "0.05em" }}>{artist.day}</span>
+          </div>
+          {/* Ghost number */}
+          <div className="absolute bottom-16 left-3 pointer-events-none" style={{ ...SYNE, fontSize: "clamp(3rem,6vw,5rem)", fontWeight: 900, color: "rgba(237,232,220,0.04)", lineHeight: 1, letterSpacing: "-0.04em" }}>
+            {String(artist.id).padStart(2, "0")}
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="px-4 py-3">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md mb-2" style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}30` }}>
+            <Icon size={10} color={cfg.color} />
+            <span style={{ ...SG, fontSize: "0.58rem", color: cfg.color, fontWeight: 700, letterSpacing: "0.12em" }}>{cfg.label}</span>
+          </div>
+          <motion.h3
+            animate={{ color: isActive || hovered ? cfg.color : "#EDE8DC" }}
+            transition={{ duration: 0.3 }}
+            style={{ ...SYNE, fontWeight: 800, fontSize: "clamp(1.1rem, 2vw, 1.6rem)", lineHeight: 1.05, letterSpacing: "-0.02em" }}
+          >
+            {artist.name}
+          </motion.h3>
+          <p className="mt-0.5" style={{ ...SG, fontSize: "0.72rem", color: "rgba(237,232,220,0.3)" }}>{artist.origin}</p>
+        </div>
+
+        {/* Bottom glow */}
+        <motion.div className="absolute bottom-0 left-0 right-0 h-0.5"
+          animate={{ opacity: isActive || hovered ? 1 : 0, scaleX: isActive || hovered ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          style={{ background: `linear-gradient(to right, transparent, ${cfg.color}, transparent)`, transformOrigin: "center" }}
+        />
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─── Main Section ─────────────────────────────────────── */
+export function LineUp() {
+  const sectionRef   = useRef<HTMLDivElement>(null);
+  const scrollRef    = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState(0);
+  const [paused,  setPaused]  = useState(false);
+
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "end start"] });
+  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
+
+  // ── Per-card scroll helper — centers the target card ──
+  const scrollToCard = useCallback((index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cards = Array.from(el.querySelectorAll("[data-card]")) as HTMLElement[];
+    if (!cards[index]) return;
+    const card = cards[index];
+    // Center the card in the scroll container
+    const scrollLeft = card.offsetLeft - el.clientWidth / 2 + card.offsetWidth / 2;
+    el.scrollTo({ left: Math.max(0, scrollLeft), behavior: "smooth" });
+    setCurrent(index);
+  }, []);
+
+  // ── Auto-advance: pauses when hovering ─────────────────
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => {
+      setCurrent(prev => {
+        const next = (prev + 1) % artists.length;
+        scrollToCard(next);
+        return next;
+      });
+    }, 1100);
+    return () => clearInterval(id);
+  }, [paused, scrollToCard]);
+
+  const prev = () => { const p = (current - 1 + artists.length) % artists.length; scrollToCard(p); };
+  const next = () => { const n = (current + 1) % artists.length; scrollToCard(n); };
+
+  return (
+    <section
+      id="lineup"
+      ref={sectionRef}
+      className="relative w-full py-24 md:py-36 overflow-hidden"
+      style={{ background: "#070810", minHeight: "60vh" }}
+    >
+      {/* ── Blend top with About ── */}
+      <div className="absolute top-0 left-0 right-0 pointer-events-none z-10" style={{ height: 100, background: "linear-gradient(to bottom, #070810 0%, transparent 100%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-10" style={{ height: 100, background: "linear-gradient(to top, #070810 0%, transparent 100%)" }} />
+
+      {/* ── Spotlight orbs ── */}
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ y: bgY }}>
+        <SpotlightOrb color="rgba(47,167,216,0.22)"  size={600} blur={80} duration={9}  x1="calc(-5%)"  y1="calc(0%)"  x2="calc(50%)"  y2="calc(45%)" />
+        <SpotlightOrb color="rgba(0,212,255,0.14)"   size={450} blur={65} duration={12} x1="calc(60%)"  y1="calc(5%)"  x2="calc(10%)"  y2="calc(65%)" />
+        <SpotlightOrb color="rgba(156,108,255,0.11)" size={500} blur={80} duration={15} x1="calc(30%)"  y1="calc(55%)" x2="calc(75%)"  y2="calc(8%)"  />
+        <SpotlightOrb color="rgba(255,215,64,0.08)"  size={300} blur={55} duration={7}  x1="calc(80%)"  y1="calc(25%)" x2="calc(20%)"  y2="calc(75%)" />
+      </motion.div>
+
+      {/* ── Section Header ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 lg:px-16 mb-12 md:mb-16">
+        <div className="grid lg:grid-cols-2 gap-8 items-end">
+          <div>
+            <motion.div className="flex items-center gap-3 mb-6" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+              <div className="w-8 h-px bg-[#2FA7D8]" />
+              <span style={{ ...SG, fontSize: "0.7rem", letterSpacing: "0.25em", color: "#2FA7D8", textTransform: "uppercase" }}>Performing Artists</span>
+            </motion.div>
+            <div style={{ overflow: "hidden" }}>
+              <motion.h2 initial={{ y: "100%", opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                style={{ ...SYNE, fontWeight: 800, fontSize: "clamp(2.4rem,5.5vw,5rem)", color: "#EDE8DC", lineHeight: 1, letterSpacing: "-0.03em" }}>
+                The Stage
+              </motion.h2>
+            </div>
+            <div style={{ overflow: "hidden" }}>
+              <motion.h2 initial={{ y: "100%", opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
+                style={{ ...SYNE, fontWeight: 800, fontSize: "clamp(2.4rem,5.5vw,5rem)", color: "transparent", WebkitTextStroke: "1.5px rgba(237,232,220,0.22)", lineHeight: 1, letterSpacing: "-0.03em" }}>
+                Line Up
+              </motion.h2>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 pb-1">
+            <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
+              style={{ ...SG, fontSize: "0.9rem", color: "rgba(237,232,220,0.35)", lineHeight: 1.8 }}>
+              From global icons to local legends, experience the ultimate Songkran soundtrack across 11 pulse-pounding nights.
+            </motion.p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Per-Card Carousel ── */}
+      <div
+        className="relative z-10"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        {/* Scroll track */}
+        <div
+          ref={scrollRef}
+          className="flex items-start"
+          style={{
+            overflowX: "auto",
+            overflowY: "visible",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            // Padding allows first and last cards to reach horizontal center
+            paddingLeft: "calc(50% - clamp(110px, 29vw, 160px))",
+            paddingRight: "calc(50% - clamp(110px, 29vw, 160px))",
+            paddingTop: 40,
+            paddingBottom: 100,
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {artists.map((artist, i) => (
+            <ArtistCard key={artist.id} artist={artist} isActive={i === current} />
+          ))}
+        </div>
+
+      </div>
+
+      {/* ── Controls ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 lg:px-16 mt-4 flex items-center justify-between">
+        {/* Dot indicators */}
+        <div className="flex items-center gap-2">
+          {artists.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => scrollToCard(i)}
+              style={{
+                width: i === current ? 24 : 6,
+                height: 6,
+                borderRadius: 3,
+                background: i === current ? TYPE_CONFIG[artists[i].type].color : "rgba(255,255,255,0.2)",
+                transition: "all 0.35s ease",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Arrow buttons */}
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            onClick={prev}
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ border: "1.5px solid rgba(0,212,255,0.35)", background: "rgba(0,212,255,0.07)", color: "#00d4ff", cursor: "pointer" }}
+          >
+            <ChevronLeft size={18} />
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
+            onClick={next}
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ border: "1.5px solid rgba(0,212,255,0.35)", background: "rgba(0,212,255,0.07)", color: "#00d4ff", cursor: "pointer" }}
+          >
+            <ChevronRight size={18} />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* ── Disclaimer ── */}
+{/* 
+      <p className="relative z-10 text-center mt-8" style={{ ...SG, fontSize: "0.65rem", color: "rgba(237,232,220,0.15)", letterSpacing: "0.04em" }}>
+        * Lineup subject to change without prior notice.
+      </p>
+      */}
+    </section>
+  );
+}

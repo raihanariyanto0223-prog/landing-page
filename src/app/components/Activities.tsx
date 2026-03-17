@@ -566,12 +566,14 @@ export function Activities() {
       </div>
 
       {/* Disclaimer */}
+      {/* 
       <p
         className="text-center mt-10 text-white/25"
         style={{ fontSize: "0.72rem", letterSpacing: "0.04em" }}
       >
         * Activities are tentative and subject to change at the organizer's discretion.
       </p>
+      */}
     </section>
   );
 }

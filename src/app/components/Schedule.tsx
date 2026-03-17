@@ -134,7 +134,7 @@ export function Schedule() {
                   transition={{ duration: 0.35, ease: "easeOut" }}
                 >
                   <div className="flex items-center gap-4 mb-6 pb-5" style={{ borderBottom: "1px solid rgba(237,232,220,0.07)" }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(244,160,51,0.12)", border: "1px solid rgba(244,160,51,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div style={{ minWidth: 52, width: "fit-content", height: 52, borderRadius: 14, background: "rgba(244,160,51,0.12)", border: "1px solid rgba(244,160,51,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: "0 12px" }}>
                       <span style={{ ...SYNE, fontWeight: 800, color: "#2FA7D8", fontSize: "1.1rem" }}>{schedule[active].shortDate}</span>
                     </div>
                     <div>

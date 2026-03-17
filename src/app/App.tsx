@@ -6,6 +6,7 @@ import { Marquee } from "./components/Marquee";
 import { About } from "./components/About";
 import { BentoGrid } from "./components/BentoGrid";
 import { Activities } from "./components/Activities";
+import { LineUp } from "./components/LineUp";
 import { Schedule } from "./components/Schedule";
 import { Gallery } from "./components/Gallery";
 import { FAQ } from "./components/FAQ";
@@ -20,6 +21,7 @@ export default function App() {
       <Hero />
       <Marquee />
       <About />
+      <LineUp />
       <BentoGrid />
       <Marquee reverse />
       <Activities />

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "motion/react";
+import { UnderwaterBackground } from "./UnderwaterBackground";
 
 const BG_VIDEO = "https://video.wixstatic.com/video/c338c6_cbac5475bb7e41d3a5e45bdac6812b3f/720p/mp4/file.mp4";
 
@@ -38,21 +39,6 @@ function ScribbleUnderline({ color = "#2FA7D8", width = 160 }: { color?: string;
   );
 }
 
-// Floating water particle
-function WaterDrop({ x, y, size, delay }: { x: string; y: string; size: number; delay: number }) {
-  return (
-    <motion.div
-      className="absolute rounded-full pointer-events-none"
-      style={{
-        left: x, top: y, width: size, height: size,
-        background: "radial-gradient(circle at 30% 30%, rgba(24,199,204,0.6), rgba(0,60,100,0.4))",
-        boxShadow: "inset -2px -2px 4px rgba(0,0,0,0.3), inset 1px 1px 4px rgba(255,255,255,0.2), 0 4px 16px rgba(24,199,204,0.3)",
-      }}
-      animate={{ y: [0, -24, 0], opacity: [0.4, 0.9, 0.4] }}
-      transition={{ duration: 3 + delay, delay, repeat: Infinity, ease: "easeInOut" }}
-    />
-  );
-}
 
 const SYNE: React.CSSProperties = { fontFamily: "'Syne', sans-serif" };
 const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
@@ -91,18 +77,14 @@ export function Hero() {
           muted 
           playsInline
           className="w-full h-full object-cover" 
-          style={{ opacity: 0.25 }} // Slightly increased opacity since video might be darker
+          style={{ opacity: 0.35 }} 
         />
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 60% 40%, rgba(24,199,204,0.08) 0%, transparent 65%), radial-gradient(ellipse at 20% 70%, rgba(244,160,51,0.07) 0%, transparent 60%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(5,5,8,0.3) 0%, transparent 40%, rgba(5,5,8,0.9) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 60% 40%, rgba(24,199,204,0.06) 0%, transparent 65%), radial-gradient(ellipse at 20% 70%, rgba(244,160,51,0.05) 0%, transparent 60%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(5,5,8,0.2) 0%, transparent 40%, rgba(5,5,8,0.7) 100%)" }} />
       </motion.div>
 
-      {/* Floating water drops */}
-      <WaterDrop x="8%" y="20%" size={14} delay={0} />
-      <WaterDrop x="88%" y="15%" size={20} delay={0.7} />
-      <WaterDrop x="75%" y="55%" size={10} delay={1.4} />
-      <WaterDrop x="15%" y="65%" size={16} delay={0.4} />
-      <WaterDrop x="50%" y="12%" size={8} delay={1.1} />
+      {/* Underwater Background Effect */}
+      <UnderwaterBackground className="opacity-45" intensity={1.1} speed={0.8} />
 
       {/* Parallax layer 2 */}
       <motion.div className="absolute inset-0 pointer-events-none" style={{ x: px2, y: py2 }}>

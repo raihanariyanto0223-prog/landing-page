@@ -21,6 +21,7 @@ export function Navbar() {
 
   const links = [
     { id: "#about", label: "About" },
+    { id: "#lineup", label: "Line Up" },
     { id: "#activities", label: "Activities" },
     { id: "#schedule", label: "Schedule" },
     { id: "#gallery", label: "Gallery" },

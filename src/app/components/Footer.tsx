@@ -107,7 +107,7 @@ export function Footer() {
               <span style={{ ...SYNE, fontWeight: 800, fontSize: "1.2rem", letterSpacing: "0.15em", color: "#EDE8DC" }}>SONGKRAN</span>
             </div>
             <p style={{ ...SG, fontSize: "0.82rem", color: "rgba(237,232,220,0.3)", lineHeight: 1.8, marginBottom: 20 }}>
-              Thailand's iconic water festival — brought to Malaysia for the first time. Celebrating culture, renewal, and togetherness.
+              Thailand's iconic water festival — brought to Malaysia for celebrating culture, renewal, and togetherness.
             </p>
             <div className="flex gap-3">
               {[Instagram, Facebook, Twitter].map((Icon, i) => (
@@ -168,9 +168,11 @@ export function Footer() {
             <div style={{ width: 1, height: 16, background: "rgba(237,232,220,0.1)" }} />
             <span className="text-xl">🇲🇾</span>
           </div>
+          {/* 
           <p style={{ ...SG, fontSize: "0.65rem", color: "rgba(237,232,220,0.18)" }}>
             * Activities tentative & subject to change
           </p>
+          */}
         </div>
       </div>
     </footer>
