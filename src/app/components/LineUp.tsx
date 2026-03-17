@@ -243,6 +243,26 @@ export function LineUp() {
         onMouseLeave={() => setPaused(false)}
       >
         <motion.div
+          drag="x"
+          dragConstraints={{
+            left: (windowWidth / 2) - (cardFullWidth / 2) - ((artists.length - 1) * cardFullWidth),
+            right: (windowWidth / 2) - (cardFullWidth / 2),
+          }}
+          onDragStart={() => setPaused(true)}
+          onDragEnd={(_, info) => {
+            const offset = info.offset.x;
+            const velocity = info.velocity.x;
+            
+            // Snap to next/prev if drag is significant or fast
+            if (offset < -50 || velocity < -500) {
+              next();
+            } else if (offset > 50 || velocity > 500) {
+              prev();
+            } else {
+              // Stay on current
+              setCurrent(current);
+            }
+          }}
           animate={{ x: trackX }}
           transition={{ type: "spring", stiffness: 120, damping: 22, mass: 1 }}
           className="flex items-start"
