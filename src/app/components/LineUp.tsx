@@ -41,9 +41,9 @@ function SpotlightOrb({ color, size, duration, x1, y1, x2, y2, blur }: OrbProps)
   return (
     <motion.div
       className="absolute pointer-events-none"
-      style={{ width: size, height: size, borderRadius: "50%", background: `radial-gradient(circle at 40% 40%, ${color} 0%, transparent 70%)`, filter: `blur(${blur}px)`, left: 0, top: 0 }}
+      style={{ width: size, height: size, borderRadius: "50%", background: `radial-gradient(circle at 40% 40%, ${color} 0%, transparent 70%)`, filter: `blur(${blur}px)`, left: 0, top: 0, willChange: "transform" }}
       animate={{ x: [x1, x2, x1], y: [y1, y2, y1] }}
-      transition={{ duration, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
+      transition={{ duration, repeat: Infinity, ease: "linear" }}
     />
   );
 }
@@ -75,20 +75,24 @@ function ArtistCard({ artist, isActive }: { artist: Artist; isActive: boolean })
     >
       <motion.div
         animate={{
-          scale: isActive ? 1.04 : hovered ? 1.03 : 1,
+          scale: isActive ? 1.05 : hovered ? 1.02 : 1,
           boxShadow: isActive
-            ? `0 0 60px ${cfg.color}50, 0 24px 60px rgba(0,0,0,0.7)`
+            ? `0 0 40px ${cfg.color}40, 0 20px 40px rgba(0,0,0,0.6)`
             : hovered
-            ? `0 0 40px ${cfg.color}30, 0 16px 40px rgba(0,0,0,0.6)`
-            : "0 6px 32px rgba(0,0,0,0.5)",
+            ? `0 0 30px ${cfg.color}20, 0 12px 30px rgba(0,0,0,0.5)`
+            : "0 4px 24px rgba(0,0,0,0.4)",
         }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="relative overflow-hidden"
         style={{
-          borderRadius: 18,
-          border: isActive ? `1.5px solid ${cfg.color}66` : "1.5px solid rgba(255,255,255,0.07)",
-          background: "#060610",
-          transition: "border-color 0.35s",
+          borderRadius: 20,
+          border: isActive ? `1.5px solid ${cfg.color}80` : "1.5px solid rgba(255,255,255,0.05)",
+          background: "#080812",
+          // Flickering fixes
+          WebkitBackfaceVisibility: "hidden",
+          backfaceVisibility: "hidden",
+          transformStyle: "preserve-3d",
+          willChange: "transform, scale",
         }}
       >
         {/* Portrait Image */}
@@ -110,7 +114,7 @@ function ArtistCard({ artist, isActive }: { artist: Artist; isActive: boolean })
             </div>
           )}
           {/* Day pill */}
-          <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "rgba(5,5,8,0.72)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "rgba(5,5,8,0.8)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.color }} />
             <span style={{ ...SG, fontSize: "0.62rem", color: "rgba(237,232,220,0.75)", fontWeight: 600, letterSpacing: "0.05em" }}>{artist.day}</span>
           </div>
@@ -137,7 +141,7 @@ function ArtistCard({ artist, isActive }: { artist: Artist; isActive: boolean })
         </div>
 
         {/* Bottom glow */}
-        <motion.div className="absolute bottom-0 left-0 right-0 h-0.5"
+        <motion.div className="absolute bottom-0 left-0 right-0 h-[2px]"
           animate={{ opacity: isActive || hovered ? 1 : 0, scaleX: isActive || hovered ? 1 : 0 }}
           transition={{ duration: 0.4 }}
           style={{ background: `linear-gradient(to right, transparent, ${cfg.color}, transparent)`, transformOrigin: "center" }}
@@ -152,7 +156,7 @@ export function LineUp() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1500);
 
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "end start"] });
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
@@ -169,7 +173,7 @@ export function LineUp() {
     if (paused) return;
     const id = setInterval(() => {
       setCurrent(prev => (prev + 1) % artists.length);
-    }, 1100);
+    }, 2500);
     return () => clearInterval(id);
   }, [paused]);
 
@@ -204,10 +208,8 @@ export function LineUp() {
 
       {/* ── Spotlight orbs ── */}
       <motion.div className="absolute inset-0 pointer-events-none" style={{ y: bgY }}>
-        <SpotlightOrb color="rgba(47,167,216,0.22)"  size={600} blur={80} duration={9}  x1="-5%"  y1="0%"  x2="50%"  y2="45%" />
-        <SpotlightOrb color="rgba(0,212,255,0.14)"   size={450} blur={65} duration={12} x1="60%"  y1="5%"  x2="10%"  y2="65%" />
-        <SpotlightOrb color="rgba(156,108,255,0.11)" size={500} blur={80} duration={15} x1="30%"  y1="55%" x2="75%"  y2="8%"  />
-        <SpotlightOrb color="rgba(255,215,64,0.08)"  size={300} blur={55} duration={7}  x1="80%"  y1="25%" x2="20%"  y2="75%" />
+        <SpotlightOrb color="rgba(47,167,216,0.18)"  size={650} blur={90} duration={12} x1="-10%"  y1="0%"  x2="40%"  y2="30%" />
+        <SpotlightOrb color="rgba(156,108,255,0.12)" size={550} blur={90} duration={18} x1="50%"  y1="40%" x2="0%"   y2="10%"  />
       </motion.div>
 
       {/* ── Section Header ── */}
@@ -247,12 +249,13 @@ export function LineUp() {
       >
         <motion.div
           animate={{ x: trackX }}
-          transition={{ type: "spring", stiffness: 180, damping: 24, mass: 0.8 }}
+          transition={{ type: "spring", stiffness: 120, damping: 22, mass: 1 }}
           className="flex items-start"
           style={{
             paddingTop: 40,
             paddingBottom: 100,
             willChange: "transform",
+            transformStyle: "preserve-3d",
           }}
         >
           {artists.map((artist, i) => (
