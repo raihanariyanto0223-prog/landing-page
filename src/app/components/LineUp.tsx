@@ -149,42 +149,47 @@ function ArtistCard({ artist, isActive }: { artist: Artist; isActive: boolean })
 
 /* ─── Main Section ─────────────────────────────────────── */
 export function LineUp() {
-  const sectionRef   = useRef<HTMLDivElement>(null);
-  const scrollRef    = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(0);
-  const [paused,  setPaused]  = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
 
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "end start"] });
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
 
-  // ── Per-card scroll helper — centers the target card ──
-  const scrollToCard = useCallback((index: number) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cards = Array.from(el.querySelectorAll("[data-card]")) as HTMLElement[];
-    if (!cards[index]) return;
-    const card = cards[index];
-    // Center the card in the scroll container
-    const scrollLeft = card.offsetLeft - el.clientWidth / 2 + card.offsetWidth / 2;
-    el.scrollTo({ left: Math.max(0, scrollLeft), behavior: "smooth" });
-    setCurrent(index);
+  // ── Handle window resize for dynamic centering ──
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ── Auto-advance: pauses when hovering ─────────────────
+  // ── Auto-advance: pauses when hovering ──
   useEffect(() => {
     if (paused) return;
     const id = setInterval(() => {
-      setCurrent(prev => {
-        const next = (prev + 1) % artists.length;
-        scrollToCard(next);
-        return next;
-      });
+      setCurrent(prev => (prev + 1) % artists.length);
     }, 1100);
     return () => clearInterval(id);
-  }, [paused, scrollToCard]);
+  }, [paused]);
 
-  const prev = () => { const p = (current - 1 + artists.length) % artists.length; scrollToCard(p); };
-  const next = () => { const n = (current + 1) % artists.length; scrollToCard(n); };
+  // ── Calculate X-Offset ──
+  // Card width is clamp(220px, 58vw, 320px)
+  // Margin-right is clamp(-24px, -2.5vw, -12px)
+  const getCardWidth = () => {
+    const vw = windowWidth;
+    let w = Math.max(220, Math.min(vw * 0.58, 320));
+    let m = Math.max(-24, Math.min(vw * -0.025, -12));
+    return w + m; 
+  };
+
+  const cardFullWidth = getCardWidth();
+  // We want the 'current' card to be dead-center.
+  // The 'x' offset for the track should be: (center_of_screen) - (center_of_current_card) - (offset_to_card_i)
+  const trackX = (windowWidth / 2) - (cardFullWidth / 2) - (current * cardFullWidth);
+
+  const prev = () => setCurrent(prev => (prev - 1 + artists.length) % artists.length);
+  const next = () => setCurrent(prev => (prev + 1) % artists.length);
 
   return (
     <section
@@ -193,76 +198,67 @@ export function LineUp() {
       className="relative w-full py-24 md:py-36 overflow-hidden"
       style={{ background: "#070810", minHeight: "60vh" }}
     >
-      {/* ── Blend top with About ── */}
+      {/* ── Blend top/bottom ── */}
       <div className="absolute top-0 left-0 right-0 pointer-events-none z-10" style={{ height: 100, background: "linear-gradient(to bottom, #070810 0%, transparent 100%)" }} />
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-10" style={{ height: 100, background: "linear-gradient(to top, #070810 0%, transparent 100%)" }} />
 
       {/* ── Spotlight orbs ── */}
       <motion.div className="absolute inset-0 pointer-events-none" style={{ y: bgY }}>
-        <SpotlightOrb color="rgba(47,167,216,0.22)"  size={600} blur={80} duration={9}  x1="calc(-5%)"  y1="calc(0%)"  x2="calc(50%)"  y2="calc(45%)" />
-        <SpotlightOrb color="rgba(0,212,255,0.14)"   size={450} blur={65} duration={12} x1="calc(60%)"  y1="calc(5%)"  x2="calc(10%)"  y2="calc(65%)" />
-        <SpotlightOrb color="rgba(156,108,255,0.11)" size={500} blur={80} duration={15} x1="calc(30%)"  y1="calc(55%)" x2="calc(75%)"  y2="calc(8%)"  />
-        <SpotlightOrb color="rgba(255,215,64,0.08)"  size={300} blur={55} duration={7}  x1="calc(80%)"  y1="calc(25%)" x2="calc(20%)"  y2="calc(75%)" />
+        <SpotlightOrb color="rgba(47,167,216,0.22)"  size={600} blur={80} duration={9}  x1="-5%"  y1="0%"  x2="50%"  y2="45%" />
+        <SpotlightOrb color="rgba(0,212,255,0.14)"   size={450} blur={65} duration={12} x1="60%"  y1="5%"  x2="10%"  y2="65%" />
+        <SpotlightOrb color="rgba(156,108,255,0.11)" size={500} blur={80} duration={15} x1="30%"  y1="55%" x2="75%"  y2="8%"  />
+        <SpotlightOrb color="rgba(255,215,64,0.08)"  size={300} blur={55} duration={7}  x1="80%"  y1="25%" x2="20%"  y2="75%" />
       </motion.div>
 
       {/* ── Section Header ── */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 lg:px-16 mb-12 md:mb-16">
         <div className="grid lg:grid-cols-2 gap-8 items-end">
           <div>
-            <motion.div className="flex items-center gap-3 mb-6" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+            <motion.div className="flex items-center gap-3 mb-6" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
               <div className="w-8 h-px bg-[#2FA7D8]" />
               <span style={{ ...SG, fontSize: "0.7rem", letterSpacing: "0.25em", color: "#2FA7D8", textTransform: "uppercase" }}>Performing Artists</span>
             </motion.div>
-            <div style={{ overflow: "hidden" }}>
+            <div className="overflow-hidden">
               <motion.h2 initial={{ y: "100%", opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
                 style={{ ...SYNE, fontWeight: 800, fontSize: "clamp(2.4rem,5.5vw,5rem)", color: "#EDE8DC", lineHeight: 1, letterSpacing: "-0.03em" }}>
                 The Stage
               </motion.h2>
             </div>
-            <div style={{ overflow: "hidden" }}>
+            <div className="overflow-hidden">
               <motion.h2 initial={{ y: "100%", opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
                 style={{ ...SYNE, fontWeight: 800, fontSize: "clamp(2.4rem,5.5vw,5rem)", color: "transparent", WebkitTextStroke: "1.5px rgba(237,232,220,0.22)", lineHeight: 1, letterSpacing: "-0.03em" }}>
                 Line Up
               </motion.h2>
             </div>
           </div>
-          <div className="flex flex-col gap-4 pb-1">
-            <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
-              style={{ ...SG, fontSize: "0.9rem", color: "rgba(237,232,220,0.35)", lineHeight: 1.8 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
+            <p style={{ ...SG, fontSize: "0.9rem", color: "rgba(237,232,220,0.35)", lineHeight: 1.8 }}>
               From global icons to local legends, experience the ultimate Songkran soundtrack across 11 pulse-pounding nights.
-            </motion.p>
-          </div>
+            </p>
+          </motion.div>
         </div>
       </div>
 
-      {/* ── Per-Card Carousel ── */}
+      {/* ── Motion Track Carousel ── */}
       <div
-        className="relative z-10"
+        className="relative z-20 cursor-grab active:cursor-grabbing"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {/* Scroll track */}
-        <div
-          ref={scrollRef}
+        <motion.div
+          animate={{ x: trackX }}
+          transition={{ type: "spring", stiffness: 180, damping: 24, mass: 0.8 }}
           className="flex items-start"
           style={{
-            overflowX: "auto",
-            overflowY: "visible",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-            // Padding allows first and last cards to reach horizontal center
-            paddingLeft: "calc(50% - clamp(110px, 29vw, 160px))",
-            paddingRight: "calc(50% - clamp(110px, 29vw, 160px))",
             paddingTop: 40,
             paddingBottom: 100,
-            WebkitOverflowScrolling: "touch",
+            willChange: "transform",
           }}
         >
           {artists.map((artist, i) => (
             <ArtistCard key={artist.id} artist={artist} isActive={i === current} />
           ))}
-        </div>
-
+        </motion.div>
       </div>
 
       {/* ── Controls ── */}
@@ -272,7 +268,7 @@ export function LineUp() {
           {artists.map((_, i) => (
             <button
               key={i}
-              onClick={() => scrollToCard(i)}
+              onClick={() => setCurrent(i)}
               style={{
                 width: i === current ? 24 : 6,
                 height: 6,
@@ -292,7 +288,7 @@ export function LineUp() {
           <motion.button
             whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
             onClick={prev}
-            className="w-10 h-10 rounded-full flex items-center justify-center"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
             style={{ border: "1.5px solid rgba(0,212,255,0.35)", background: "rgba(0,212,255,0.07)", color: "#00d4ff", cursor: "pointer" }}
           >
             <ChevronLeft size={18} />
@@ -300,7 +296,7 @@ export function LineUp() {
           <motion.button
             whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.92 }}
             onClick={next}
-            className="w-10 h-10 rounded-full flex items-center justify-center"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
             style={{ border: "1.5px solid rgba(0,212,255,0.35)", background: "rgba(0,212,255,0.07)", color: "#00d4ff", cursor: "pointer" }}
           >
             <ChevronRight size={18} />
