@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Info, Music, Sparkles, Calendar, Image as ImageIcon, HelpCircle, ChevronRight } from "lucide-react";
 
 const S: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 
@@ -16,16 +16,30 @@ export function Navbar() {
 
   const go = (id: string) => {
     setOpen(false);
-    setTimeout(() => document.querySelector(id)?.scrollIntoView({ behavior: "smooth" }), 50);
+    setTimeout(() => {
+      const el = document.querySelector(id);
+      if (el) {
+        const offset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = el.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }
+    }, 300);
   };
 
   const links = [
-    { id: "#about", label: "About" },
-    { id: "#lineup", label: "Line Up" },
-    { id: "#activities", label: "Activities" },
-    { id: "#schedule", label: "Schedule" },
-    { id: "#gallery", label: "Gallery" },
-    { id: "#faq", label: "FAQ" },
+    { id: "#about", label: "About", icon: Info },
+    { id: "#lineup", label: "Line Up", icon: Music },
+    { id: "#activities", label: "Activities", icon: Sparkles },
+    { id: "#schedule", label: "Schedule", icon: Calendar },
+    { id: "#gallery", label: "Gallery", icon: ImageIcon },
+    { id: "#faq", label: "FAQ", icon: HelpCircle },
   ];
 
   return (
@@ -33,12 +47,13 @@ export function Navbar() {
       <motion.nav
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1.8, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.5, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         className="fixed top-0 left-0 right-0 z-[200] px-4 md:px-8 pt-4"
       >
         <div className={`rounded-2xl transition-all duration-500 ${scrolled ? "bg-[#070810]/90 backdrop-blur-xl border border-white/6 shadow-2xl shadow-black/50" : "bg-transparent"}`}>
           <div className="flex items-center justify-between px-5 py-3">
             <button
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="flex items-center gap-2 group"
             >
               <span style={{ ...S, fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "0.15em", color: "#EDE8DC" }}>
@@ -51,9 +66,10 @@ export function Navbar() {
                 <button
                   key={l.id}
                   onClick={() => go(l.id)}
-                  className="relative group"
+                  className="relative group flex items-center gap-2"
                   style={{ ...S, fontSize: "0.8rem", color: "rgba(237,232,220,0.45)", letterSpacing: "0.06em" }}
                 >
+                  <l.icon size={14} className="group-hover:text-[#2FA7D8] transition-colors duration-200" />
                   <span className="group-hover:text-[#EDE8DC] transition-colors duration-200">{l.label}</span>
                   <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-[#2FA7D8] group-hover:w-full transition-all duration-300" />
                 </button>
@@ -68,7 +84,11 @@ export function Navbar() {
               >
                 Free Entry ↗
               </button>
-              <button onClick={() => setOpen(!open)} className="md:hidden" style={{ color: "rgba(237,232,220,0.6)" }}>
+              <button 
+                onClick={() => setOpen(!open)} 
+                className="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10" 
+                style={{ color: "rgba(237,232,220,0.8)" }}
+              >
                 {open ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
@@ -76,28 +96,76 @@ export function Navbar() {
         </div>
       </motion.nav>
 
+      {/* Sidebar Mobile */}
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.97 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-20 left-4 right-4 z-[199] rounded-2xl border border-white/8 p-6 bg-[#070810]/95 backdrop-blur-2xl shadow-2xl"
-          >
-            <div className="flex flex-col gap-1">
-              {links.map((l) => (
-                <button key={l.id} onClick={() => go(l.id)} className="text-left py-3 border-b border-white/6"
-                  style={{ ...S, color: "rgba(237,232,220,0.6)", fontSize: "0.95rem" }}>
-                  {l.label}
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] md:hidden"
+            />
+            
+            {/* Sidebar Content */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 bottom-0 w-[80%] max-w-[320px] bg-[#070810] border-l border-white/10 z-[251] md:hidden flex flex-col p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-10">
+                <span style={{ ...S, fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "0.15em", color: "#EDE8DC" }}>
+                  MENU
+                </span>
+                <button 
+                  onClick={() => setOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10"
+                >
+                  <X size={20} style={{ color: "#EDE8DC" }} />
                 </button>
-              ))}
-              <button onClick={() => go("#about")} className="mt-4 rounded-full py-3 text-center text-[#050508]"
-                style={{ ...S, background: "#2FA7D8", fontWeight: 600 }}>
-                Free Entry ↗
-              </button>
-            </div>
-          </motion.div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {links.map((l, i) => (
+                  <motion.button
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    whileTap={{ scale: 0.98, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+                    transition={{ delay: 0.1 + i * 0.05 }}
+                    key={l.id}
+                    onClick={() => go(l.id)}
+                    className="flex items-center justify-between w-full py-4 px-4 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors group text-left"
+                    style={{ ...S }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-[#2FA7D8]/10 flex items-center justify-center text-[#2FA7D8] group-hover:bg-[#2FA7D8] group-hover:text-white transition-all duration-300">
+                        <l.icon size={18} />
+                      </div>
+                      <span className="text-[#EDE8DC] font-medium text-lg">{l.label}</span>
+                    </div>
+                    <ChevronRight size={18} className="text-white/20 group-hover:text-[#2FA7D8] transition-colors" />
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="mt-auto">
+                <button 
+                  onClick={() => go("#about")} 
+                  className="w-full rounded-2xl py-4 flex items-center justify-center gap-2 text-[#050508] font-bold text-lg shadow-lg shadow-[#2FA7D8]/20"
+                  style={{ ...S, background: "#2FA7D8" }}
+                >
+                  Free Entry ↗
+                </button>
+                <p className="text-center text-white/20 mt-6 text-xs" style={S}>
+                  © 2026 SONGKRAN FESTIVAL
+                </p>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
