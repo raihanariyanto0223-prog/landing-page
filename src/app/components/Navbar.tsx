@@ -4,6 +4,25 @@ import { Menu, X, Info, Music, Sparkles, Calendar, Image as ImageIcon, HelpCircl
 
 const S: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 
+const ScrollbarStyles = () => (
+  <style dangerouslySetInnerHTML={{ __html: `
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(47, 167, 216, 0.3);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(47, 167, 216, 0.5);
+    }
+  `}} />
+);
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -44,6 +63,7 @@ export function Navbar() {
 
   return (
     <>
+      <ScrollbarStyles />
       <motion.nav
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -129,7 +149,7 @@ export function Navbar() {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex-1 overflow-y-auto pr-2 -mr-2 custom-scrollbar flex flex-col gap-2">
                 {links.map((l, i) => (
                   <motion.button
                     initial={{ opacity: 0, x: 20 }}
